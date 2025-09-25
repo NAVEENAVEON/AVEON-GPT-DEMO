@@ -1,0 +1,65 @@
+<!-- index.html -->
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Aveon CMS GPT Demo</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;max-width:720px;margin:40px auto;padding:20px}
+    #chat{border:1px solid #ddd;padding:12px;height:420px;overflow:auto;border-radius:8px;background:#fafafa}
+    .msg{margin:8px 0}
+    .you{color:#0b70c9}
+    .bot{color:#333}
+    #controls{margin-top:12px;display:flex;gap:8px}
+    input{flex:1;padding:10px;border-radius:6px;border:1px solid #ccc}
+    button{padding:10px 14px;border-radius:6px;border:none;background:#0b70c9;color:#fff;cursor:pointer}
+  </style>
+</head>
+<body>
+  <h2>🤖 Aveon CMS — Demo Assistant</h2>
+  <div id="chat"></div>
+  <div id="controls">
+    <input id="msg" placeholder="Type question about Aveon CMS (admissions, NAAC, exam, modules)..." />
+    <button id="send">Send</button>
+  </div>
+  <script>
+    const chat = document.getElementById("chat");
+    const msg = document.getElementById("msg");
+    const btn = document.getElementById("send");
+
+    function append(who, text) {
+      const d = document.createElement("div");
+      d.className = 'msg ' + (who === 'you' ? 'you' : 'bot');
+      d.innerHTML = `<b>${who === 'you' ? 'You' : 'AveonGPT'}:</b> ${text}`;
+      chat.appendChild(d);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function send() {
+      const text = msg.value.trim();
+      if (!text) return;
+      append('you', text);
+      msg.value = '';
+      append('bot', '...thinking');
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ message: text })
+        });
+        const json = await res.json();
+        const lastBots = chat.querySelectorAll('.msg.bot');
+        if (lastBots.length) lastBots[lastBots.length-1].remove();
+        append('bot', json.reply ?? JSON.stringify(json));
+      } catch (e) {
+        console.error(e);
+        append('bot', 'Error contacting demo server.');
+      }
+    }
+
+    btn.onclick = send;
+    msg.onkeydown = (e) => { if (e.key === 'Enter') send(); };
+  </script>
+</body>
+</html>
